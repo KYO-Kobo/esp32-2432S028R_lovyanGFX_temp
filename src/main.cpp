@@ -74,19 +74,19 @@ public:
 
         {
             auto cfg = _touch_instance.config();
-            cfg.x_min = 0;
-            cfg.x_max = 239;
-            cfg.y_min = 0;
-            cfg.y_max = 319;
-            cfg.pin_int = TOUCH_IRQ;
-            cfg.bus_shared = true;
-            cfg.offset_rotation = 0;
-            cfg.spi_host = VSPI_HOST;
+            cfg.x_min = 3600;     // 左端のRaw Y値
+            cfg.x_max = 200;      // 右端のRaw Y値  
+            cfg.y_min = 400;      // 下端のRaw X値
+            cfg.y_max = 3800;     // 上端のRaw X値
+            cfg.pin_int = 36;     // Touch IRQ pin for ESP32-2432S028R
+            cfg.bus_shared = false;  // Touch uses separate SPI
+            cfg.offset_rotation = 2;  // setRotation(0)に合わせる
+            cfg.spi_host = HSPI_HOST;  // Use HSPI for touch
             cfg.freq = 1000000;
-            cfg.pin_sclk = LCD_SCK;
-            cfg.pin_mosi = LCD_MOSI;
-            cfg.pin_miso = -1; // MISO is not used on this board for touch
-            cfg.pin_cs = TOUCH_CS;
+            cfg.pin_sclk = 25;    // Touch CLK pin
+            cfg.pin_mosi = 32;    // Touch DIN pin
+            cfg.pin_miso = 39;    // Touch DO pin
+            cfg.pin_cs = 33;      // Touch CS pin
             _touch_instance.config(cfg);
             _panel_instance.setTouch(&_touch_instance);
         }
@@ -100,17 +100,85 @@ LGFX tft;
 void setup()
 {
     Serial.begin(115200);
+    delay(1000);  // シリアルモニター接続待ち
+    
+    Serial.println("Starting setup...");
+    
     tft.begin();
-    tft.setRotation(1);
+    tft.setRotation(1);  // 縦向きに変更
     tft.fillScreen(TFT_BLACK);
     tft.setTextColor(TFT_WHITE);
     tft.setTextSize(2);
     tft.setCursor(10, 10);
     tft.println("Hello World!");
+    
+    // 画面サイズを表示
+    Serial.printf("Screen size: %d x %d\n", tft.width(), tft.height());
+    
+    // タッチ初期化状態を確認
+    lgfx::touch_point_t tp;
+    uint8_t touch_state = tft.getTouchRaw(&tp);
+    Serial.printf("Touch initialized: %s\n", touch_state ? "Yes" : "No");
+    
+    // タッチ情報表示エリアを描画
+    tft.setTextSize(1);
+    tft.setCursor(10, 50);
+    tft.println("Touch the screen...");
+    tft.setCursor(10, 65);
+    tft.printf("Screen: %d x %d", tft.width(), tft.height());
+    
     Serial.println("Setup complete");
+    Serial.println("Touch detection started");
+    
+    // タッチキャリブレーション値を表示（デバッグ用）
+    tft.setCursor(10, 130);
+    tft.println("Touch pins: CLK=25, DIN=32, DO=39, CS=33");
 }
 
 void loop()
 {
-    // put your main code here, to run repeatedly:
+    static uint32_t count = 0;
+    
+    // デバッグ用：タッチ時の生データを表示
+    lgfx::touch_point_t tp;
+    if (tft.getTouchRaw(&tp) && tp.size > 0) {
+        Serial.printf("Raw touch: x=%d, y=%d, size=%d\n", tp.x, tp.y, tp.size);
+        
+        // 画面上にRaw値も表示
+        tft.fillRect(10, 150, 300, 30, TFT_BLACK);
+        tft.setCursor(10, 150);
+        tft.setTextSize(1);
+        tft.setTextColor(TFT_YELLOW);
+        tft.printf("Raw: X=%d, Y=%d", tp.x, tp.y);
+    }
+    
+    // タッチ座標を取得
+    int32_t x, y;
+    if (tft.getTouch(&x, &y)) {
+        // シリアルモニターに座標を出力
+        Serial.printf("Touch detected: x=%d, y=%d\n", x, y);
+        
+        // 画面上の座標表示エリアをクリア
+        tft.fillRect(10, 70, 300, 60, TFT_BLACK);
+        
+        // 画面に座標を表示
+        tft.setTextColor(TFT_WHITE);
+        tft.setTextSize(1);
+        tft.setCursor(10, 70);
+        tft.printf("Touch Position:");
+        
+        tft.setCursor(10, 85);
+        tft.printf("X: %d", x);
+        
+        tft.setCursor(10, 100);
+        tft.printf("Y: %d", y);
+        
+        // タッチした位置に小さな円を描画
+        tft.fillCircle(x, y, 3, TFT_RED);
+        
+        // 連続タッチでの描画を防ぐため少し待機
+        delay(50);
+    }
+    
+    delay(10);  // CPU負荷軽減
 }
