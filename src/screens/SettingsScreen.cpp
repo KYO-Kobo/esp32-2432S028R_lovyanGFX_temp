@@ -15,10 +15,13 @@ extern EventQueue* g_touchEventQueue;
 SettingsScreen::SettingsScreen(LGFX* display) 
     : BaseScreen(display, SCREEN_SETTINGS),
       touchStartX(0), touchStartY(0), touchStartTime(0), isTouching(false),
-      brightness(80), touchSound(false) {
+      brightness(80) {
     
     // ボタンを作成
     createButtons();
+    
+    // 初期の明るさを設定（80%）
+    tft->setBrightness(brightness * 255 / 100);
 }
 
 void SettingsScreen::createButtons() {
@@ -33,54 +36,53 @@ void SettingsScreen::createButtons() {
     blueStyle.shadowOffset = 4;
     brightnessBtn->setStyle(blueStyle);
     brightnessBtn->setOnClick([this]() {
-        brightness = (brightness + 20) % 100;
-        if (brightness == 0) brightness = 20;
+        // 現在の表示に対応する実際の明るさに更新
+        // ボタンのテキストは現在の明るさを表示しているので、
+        // その値を実際に適用する
+        tft->setBrightness(brightness * 255 / 100);
+        
+        // 次の値に更新: 20% → 40% → 60% → 80% → 100% → 20%
+        brightness = brightness + 20;
+        if (brightness > 100) {
+            brightness = 20;
+        }
+        
+        // 次の値を表示
         char buf[20];
         sprintf(buf, "明るさ: %d%%", brightness);
         buttons[0]->setText(buf);
-        Serial.printf("Brightness changed to %d%%\n", brightness);
-        
-        // 実際に明るさを変更
-        // tft->setBrightness(brightness * 255 / 100);
+        Serial.printf("Next brightness will be %d%%\n", brightness);
     });
     buttons.push_back(std::move(brightnessBtn));
     
-    // ボタン2: タッチ音設定（緑のボタン）
-    auto soundBtn = std::unique_ptr<ModernButton>(
-        new ModernButton(tft, 170, 70, 130, 40, "タッチ音: OFF")
+    // ボタン2: 情報（緑のボタン）
+    auto infoBtn = std::unique_ptr<ModernButton>(
+        new ModernButton(tft, 170, 70, 130, 40, "情報")
     );
     ButtonStyle greenStyle;
     greenStyle.normalColor = tft->color565(76, 175, 80);    // Material Green
     greenStyle.pressedColor = tft->color565(56, 142, 60);   // Darker Green
     greenStyle.cornerRadius = 10;
     greenStyle.shadowOffset = 4;
-    soundBtn->setStyle(greenStyle);
-    soundBtn->setOnClick([this]() {
-        touchSound = !touchSound;
-        buttons[1]->setText(touchSound ? "タッチ音: ON" : "タッチ音: OFF");
-        Serial.printf("Touch sound: %s\n", touchSound ? "ON" : "OFF");
+    infoBtn->setStyle(greenStyle);
+    infoBtn->setOnClick([this]() {
+        Serial.println("Information button pressed");
+        // 情報画面への遷移
+        Event infoEvent;
+        infoEvent.type = EVENT_SCREEN_CHANGE;
+        infoEvent.data.screenChange.targetScreen = SCREEN_INFO;
+        infoEvent.data.screenChange.transition = TRANSITION_SLIDE_LEFT;
+        
+        if (g_touchEventQueue) {
+            g_touchEventQueue->send(infoEvent);
+        }
     });
-    buttons.push_back(std::move(soundBtn));
+    buttons.push_back(std::move(infoBtn));
     
-    // ボタン3: キャリブレーション（オレンジのボタン）
-    auto calibBtn = std::unique_ptr<ModernButton>(
-        new ModernButton(tft, 20, 125, 130, 35, "キャリブレーション")
-    );
-    ButtonStyle orangeStyle;
-    orangeStyle.normalColor = tft->color565(255, 152, 0);    // Material Orange
-    orangeStyle.pressedColor = tft->color565(245, 124, 0);   // Darker Orange
-    orangeStyle.cornerRadius = 8;
-    orangeStyle.shadowOffset = 3;
-    calibBtn->setStyle(orangeStyle);
-    calibBtn->setOnClick([this]() {
-        Serial.println("Starting touch calibration...");
-        // TODO: キャリブレーション画面への遷移
-    });
-    buttons.push_back(std::move(calibBtn));
     
-    // ボタン4: リセット（赤いボタン）
+    // ボタン3: リセット（赤いボタン）
     auto resetBtn = std::unique_ptr<ModernButton>(
-        new ModernButton(tft, 170, 125, 130, 35, "リセット")
+        new ModernButton(tft, 95, 180, 130, 35, "リセット")
     );
     ButtonStyle redStyle;
     redStyle.normalColor = tft->color565(244, 67, 54);     // Material Red
@@ -92,31 +94,16 @@ void SettingsScreen::createButtons() {
     resetBtn->setStyle(redStyle);
     resetBtn->setOnClick([this]() {
         brightness = 80;
-        touchSound = false;
         buttons[0]->setText("明るさ: 80%");
-        buttons[1]->setText("タッチ音: OFF");
+        
+        // 明るさも80%にリセット
+        tft->setBrightness(brightness * 255 / 100);
+        
         Serial.println("Settings reset to default");
     });
     buttons.push_back(std::move(resetBtn));
     
-    // ボタン5: 保存（紫のボタン）
-    auto saveBtn = std::unique_ptr<ModernButton>(
-        new ModernButton(tft, 95, 180, 130, 35, "保存")
-    );
-    ButtonStyle purpleStyle;
-    purpleStyle.normalColor = tft->color565(156, 39, 176);  // Material Purple
-    purpleStyle.pressedColor = tft->color565(123, 31, 162); // Darker Purple
-    purpleStyle.cornerRadius = 18;  // 完全に丸い角
-    purpleStyle.shadowOffset = 2;   // 薄い影（ultra-thin）
-    saveBtn->setStyle(purpleStyle);
-    saveBtn->setOnClick([this]() {
-        Serial.println("Settings saved!");
-        // TODO: 実際の保存処理
-        returnToMenu();
-    });
-    buttons.push_back(std::move(saveBtn));
-    
-    // ボタン6: 戻る（右上）
+    // ボタン4: 戻る（右上）
     auto backBtn = std::unique_ptr<ModernButton>(
         new ModernButton(tft, tft->width() - 70, 10, 60, 30, "戻る")
     );
@@ -237,6 +224,9 @@ void SettingsScreen::handleEvent(const Event& event) {
 void SettingsScreen::onEnter() {
     Serial.println("Entered Settings Screen");
     needsRedraw = true;
+    
+    // 現在の明るさを適用
+    tft->setBrightness(brightness * 255 / 100);
 }
 
 void SettingsScreen::onExit() {

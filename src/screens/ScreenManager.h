@@ -10,6 +10,7 @@
 class HomeScreen;
 class MenuScreen;
 class SettingsScreen;
+class InfoScreen;
 
 class ScreenManager {
 private:
