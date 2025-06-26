@@ -104,26 +104,19 @@ void ScreenManager::update() {
 }
 
 void ScreenManager::performTransition(BaseScreen* fromScreen, BaseScreen* toScreen, TransitionType transition) {
-    // 簡単な遷移実装（将来的にアニメーションを追加可能）
+    // シンプルな画面遷移（アニメーションなし）
     switch (transition) {
         case TRANSITION_SLIDE_UP:
-            // TODO: スライドアップアニメーション
-            tft->fillScreen(TFT_BLACK);
-            break;
-            
         case TRANSITION_SLIDE_DOWN:
-            // TODO: スライドダウンアニメーション
-            tft->fillScreen(TFT_BLACK);
-            break;
-            
         case TRANSITION_FADE:
-            // TODO: フェードアニメーション
-            tft->fillScreen(TFT_BLACK);
-            break;
-            
         default:
-            // 即座に切り替え
-            tft->fillScreen(TFT_BLACK);
+            if (toScreen) {
+                // トランザクションを使用して描画を最適化
+                tft->startWrite();
+                toScreen->init();
+                toScreen->draw();
+                tft->endWrite();
+            }
             break;
     }
 }

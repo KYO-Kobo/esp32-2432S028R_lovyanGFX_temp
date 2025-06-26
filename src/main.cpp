@@ -30,7 +30,7 @@ public:
             auto cfg = _bus_instance.config();
             cfg.spi_host = VSPI_HOST;
             cfg.spi_mode = 0;
-            cfg.freq_write = 40000000;
+            cfg.freq_write = 80000000;  // 80MHzに増加してちらつきを軽減
             cfg.freq_read = 16000000;
             cfg.spi_3wire = true;
             cfg.use_lock = true;
