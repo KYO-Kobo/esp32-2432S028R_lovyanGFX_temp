@@ -19,6 +19,10 @@ private:
     TouchEvent lastTouch;
     uint32_t touchStartTime;
     
+    // タッチ開始位置（ジェスチャー検出用）
+    int32_t touchStartX;
+    int32_t touchStartY;
+    
     // タッチ状態管理
     enum TouchState {
         TOUCH_IDLE,

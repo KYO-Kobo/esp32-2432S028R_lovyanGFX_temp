@@ -3,6 +3,7 @@
 
 #include "../shared/Events.h"
 #include "../shared/EventQueue.h"
+#include <memory>
 
 // 前方宣言
 namespace lgfx {
@@ -11,6 +12,8 @@ namespace lgfx {
     }
 }
 using LGFX = lgfx::v1::LGFX_Device;
+
+class ScreenManager;
 
 class DisplayManager {
 private:
@@ -21,14 +24,12 @@ private:
     // 表示更新フラグ
     bool needsRedraw;
     
-    // 最後に表示した座標（変更検出用）
-    int32_t lastDisplayedX;
-    int32_t lastDisplayedY;
-    int32_t lastDisplayedRawX;
-    int32_t lastDisplayedRawY;
+    // 画面管理
+    std::unique_ptr<ScreenManager> screenManager;
     
 public:
     DisplayManager(LGFX* display);
+    ~DisplayManager();
     
     // 初期化
     void init();
@@ -50,6 +51,9 @@ public:
     
     // ステータス表示
     void updateStatus(const char* message);
+    
+    // 画面遷移（スワイプジェスチャー用）
+    void onSwipeDetected(int direction);
 };
 
 #endif // DISPLAY_MANAGER_H

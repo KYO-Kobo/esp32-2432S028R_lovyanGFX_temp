@@ -4,7 +4,8 @@
 #include <Arduino.h>
 
 TouchManager::TouchManager(LGFX* display) 
-    : tft(display), touching(false), state(TOUCH_IDLE), touchStartTime(0) {
+    : tft(display), touching(false), state(TOUCH_IDLE), touchStartTime(0),
+      touchStartX(0), touchStartY(0) {
     lastTouch = {EVENT_NONE, 0, 0, 0, 0, 0, 0};
 }
 
@@ -34,6 +35,8 @@ void TouchManager::processTouchInput() {
                 // 新しいタッチの開始
                 state = TOUCH_PRESSED;
                 touchStartTime = millis();
+                touchStartX = x;
+                touchStartY = y;
                 sendTouchEvent(EVENT_TOUCH_DOWN, x, y, raw_x, raw_y);
                 break;
                 
@@ -50,6 +53,8 @@ void TouchManager::processTouchInput() {
                 // リリース後に再度タッチされた
                 state = TOUCH_PRESSED;
                 touchStartTime = millis();
+                touchStartX = x;
+                touchStartY = y;
                 sendTouchEvent(EVENT_TOUCH_DOWN, x, y, raw_x, raw_y);
                 break;
         }
@@ -65,8 +70,8 @@ void TouchManager::processTouchInput() {
             state = TOUCH_RELEASED;
             sendTouchEvent(EVENT_TOUCH_UP, lastTouch.x, lastTouch.y, 0, 0);
             
-            // ジェスチャー検出の可能性をチェック
-            // （将来的な実装のプレースホルダー）
+            // ジェスチャー検出
+            detectGesture(touchStartX, touchStartY, lastTouch.x, lastTouch.y);
             
             touching = false;
             state = TOUCH_IDLE;
