@@ -24,7 +24,7 @@ SettingsScreen::SettingsScreen(LGFX* display)
 void SettingsScreen::createButtons() {
     // ボタン1: 明るさ調整（青いボタン）
     auto brightnessBtn = std::unique_ptr<ModernButton>(
-        new ModernButton(tft, 20, 100, 130, 40, "明るさ: 80%")
+        new ModernButton(tft, 20, 70, 130, 40, "明るさ: 80%")
     );
     ButtonStyle blueStyle;
     blueStyle.normalColor = tft->color565(33, 150, 243);    // Material Blue
@@ -44,7 +44,7 @@ void SettingsScreen::createButtons() {
     
     // ボタン2: タッチ音設定（緑のボタン）
     auto soundBtn = std::unique_ptr<ModernButton>(
-        new ModernButton(tft, 170, 100, 130, 40, "タッチ音: OFF")
+        new ModernButton(tft, 170, 70, 130, 40, "タッチ音: OFF")
     );
     ButtonStyle greenStyle;
     greenStyle.normalColor = tft->color565(76, 175, 80);    // Material Green
@@ -61,7 +61,7 @@ void SettingsScreen::createButtons() {
     
     // ボタン3: リセット（赤いボタン、角なし）
     auto resetBtn = std::unique_ptr<ModernButton>(
-        new ModernButton(tft, 20, 155, 130, 35, "リセット")
+        new ModernButton(tft, 20, 125, 130, 35, "リセット")
     );
     ButtonStyle redStyle;
     redStyle.normalColor = tft->color565(244, 67, 54);     // Material Red
@@ -82,7 +82,7 @@ void SettingsScreen::createButtons() {
     
     // ボタン4: 保存（紫のボタン、ultra-thin）
     auto saveBtn = std::unique_ptr<ModernButton>(
-        new ModernButton(tft, 170, 155, 130, 35, "保存")
+        new ModernButton(tft, 170, 125, 130, 35, "保存")
     );
     ButtonStyle purpleStyle;
     purpleStyle.normalColor = tft->color565(156, 39, 176);  // Material Purple
@@ -124,21 +124,8 @@ void SettingsScreen::init() {
     tft->setCursor(10, 20);
     tft->println("設定画面");
     
-    // 戻る方法の説明
-    tft->setFont(&fonts::lgfxJapanGothic_12);
-    tft->setTextColor(TFT_CYAN);
-    tft->setCursor(10, 45);
-    tft->println("どの方向にスワイプしても");
-    tft->setCursor(10, 60);
-    tft->println("ホーム画面に戻ります");
-    
     // 枠線を描画
-    tft->drawRect(5, 75, tft->width() - 10, 2, TFT_DARKGREY);
-    
-    // スワイプ案内（画面下部）
-    tft->setTextColor(TFT_YELLOW);
-    tft->setCursor(10, 205);
-    tft->println("↑↓←→ スワイプでホームへ");
+    tft->drawRect(5, 50, tft->width() - 10, 2, TFT_DARKGREY);
     
     // デフォルトフォントに戻す
     tft->setFont(nullptr);
