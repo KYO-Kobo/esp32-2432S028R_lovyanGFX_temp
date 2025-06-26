@@ -9,6 +9,7 @@
 // 前方宣言
 class HomeScreen;
 class MenuScreen;
+class SettingsScreen;
 
 class ScreenManager {
 private:

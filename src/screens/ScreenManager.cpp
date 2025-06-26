@@ -3,6 +3,7 @@
 #include "ScreenManager.h"
 #include "HomeScreen.h"
 #include "MenuScreen.h"
+#include "SettingsScreen.h"
 #include <Arduino.h>
 
 ScreenManager::ScreenManager(LGFX* display) 
@@ -17,6 +18,7 @@ void ScreenManager::init() {
     // 画面を登録
     registerScreen(SCREEN_HOME, std::unique_ptr<BaseScreen>(new HomeScreen(tft)));
     registerScreen(SCREEN_MENU, std::unique_ptr<BaseScreen>(new MenuScreen(tft)));
+    registerScreen(SCREEN_SETTINGS, std::unique_ptr<BaseScreen>(new SettingsScreen(tft)));
     
     // ホーム画面から開始
     transitionTo(SCREEN_HOME);

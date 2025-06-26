@@ -14,87 +14,36 @@ extern EventQueue* g_touchEventQueue;
 
 MenuScreen::MenuScreen(LGFX* display) 
     : BaseScreen(display, SCREEN_MENU),
-      touchStartX(0), touchStartY(0), touchStartTime(0), isTouching(false),
-      brightness(80), touchSound(false) {
+      touchStartX(0), touchStartY(0), touchStartTime(0), isTouching(false) {
     
     // ボタンを作成
     createButtons();
 }
 
 void MenuScreen::createButtons() {
-    // ボタン1: 明るさ調整（青いボタン）
-    auto brightnessBtn = std::unique_ptr<ModernButton>(
-        new ModernButton(tft, 20, 70, 130, 40, "明るさ: 80%")
+    // ボタン1: デバイス設定（青いボタン、右下）
+    auto deviceSettingsBtn = std::unique_ptr<ModernButton>(
+        new ModernButton(tft, 170, 170, 130, 40, "デバイス設定")
     );
     ButtonStyle blueStyle;
     blueStyle.normalColor = tft->color565(33, 150, 243);    // Material Blue
     blueStyle.pressedColor = tft->color565(25, 118, 210);   // Darker Blue
     blueStyle.cornerRadius = 10;
     blueStyle.shadowOffset = 4;
-    brightnessBtn->setStyle(blueStyle);
-    brightnessBtn->setOnClick([this]() {
-        brightness = (brightness + 20) % 100;
-        if (brightness == 0) brightness = 20;
-        char buf[20];
-        sprintf(buf, "明るさ: %d%%", brightness);
-        buttons[0]->setText(buf);
-        Serial.printf("Brightness changed to %d%%\n", brightness);
+    deviceSettingsBtn->setStyle(blueStyle);
+    deviceSettingsBtn->setOnClick([this]() {
+        Serial.println("Device Settings button pressed");
+        // 設定画面に遷移
+        Event settingsEvent;
+        settingsEvent.type = EVENT_SCREEN_CHANGE;
+        settingsEvent.data.screenChange.targetScreen = SCREEN_SETTINGS;
+        settingsEvent.data.screenChange.transition = TRANSITION_SLIDE_LEFT;
+        
+        if (g_touchEventQueue) {
+            g_touchEventQueue->send(settingsEvent);
+        }
     });
-    buttons.push_back(std::move(brightnessBtn));
-    
-    // ボタン2: タッチ音設定（緑のボタン）
-    auto soundBtn = std::unique_ptr<ModernButton>(
-        new ModernButton(tft, 170, 70, 130, 40, "タッチ音: OFF")
-    );
-    ButtonStyle greenStyle;
-    greenStyle.normalColor = tft->color565(76, 175, 80);    // Material Green
-    greenStyle.pressedColor = tft->color565(56, 142, 60);   // Darker Green
-    greenStyle.cornerRadius = 10;
-    greenStyle.shadowOffset = 4;
-    soundBtn->setStyle(greenStyle);
-    soundBtn->setOnClick([this]() {
-        touchSound = !touchSound;
-        buttons[1]->setText(touchSound ? "タッチ音: ON" : "タッチ音: OFF");
-        Serial.printf("Touch sound: %s\n", touchSound ? "ON" : "OFF");
-    });
-    buttons.push_back(std::move(soundBtn));
-    
-    // ボタン3: リセット（赤いボタン、角なし）
-    auto resetBtn = std::unique_ptr<ModernButton>(
-        new ModernButton(tft, 20, 125, 130, 35, "リセット")
-    );
-    ButtonStyle redStyle;
-    redStyle.normalColor = tft->color565(244, 67, 54);     // Material Red
-    redStyle.pressedColor = tft->color565(211, 47, 47);    // Darker Red
-    redStyle.cornerRadius = 0;  // 角なし
-    redStyle.shadowOffset = 3;
-    redStyle.borderWidth = 2;
-    redStyle.borderColor = tft->color565(183, 28, 28);     // Dark Red Border
-    resetBtn->setStyle(redStyle);
-    resetBtn->setOnClick([this]() {
-        brightness = 80;
-        touchSound = false;
-        buttons[0]->setText("明るさ: 80%");
-        buttons[1]->setText("タッチ音: OFF");
-        Serial.println("Menu reset to default");
-    });
-    buttons.push_back(std::move(resetBtn));
-    
-    // ボタン4: 保存（紫のボタン、ultra-thin）
-    auto saveBtn = std::unique_ptr<ModernButton>(
-        new ModernButton(tft, 170, 125, 130, 35, "保存")
-    );
-    ButtonStyle purpleStyle;
-    purpleStyle.normalColor = tft->color565(156, 39, 176);  // Material Purple
-    purpleStyle.pressedColor = tft->color565(123, 31, 162); // Darker Purple
-    purpleStyle.cornerRadius = 18;  // 完全に丸い角
-    purpleStyle.shadowOffset = 2;   // 薄い影（ultra-thin）
-    saveBtn->setStyle(purpleStyle);
-    saveBtn->setOnClick([this]() {
-        Serial.println("Menu saved!");
-        // TODO: 実際の保存処理
-    });
-    buttons.push_back(std::move(saveBtn));
+    buttons.push_back(std::move(deviceSettingsBtn));
     
     // ボタン5: 閉じる（右上、リセットボタンと同じスタイル）
     auto closeBtn = std::unique_ptr<ModernButton>(
