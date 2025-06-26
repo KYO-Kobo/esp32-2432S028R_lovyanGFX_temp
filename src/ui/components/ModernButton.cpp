@@ -12,6 +12,10 @@ ModernButton::ModernButton(LGFX* display, int16_t x, int16_t y, uint16_t w, uint
 void ModernButton::draw() {
     if (!visible || !tft) return;
     
+    // ボタン全体の領域をクリア（影も含む）
+    int16_t clearSize = style.shadowOffset + 2;  // 少し余裕を持たせる
+    tft->fillRect(x - 1, y - 1, width + clearSize + 2, height + clearSize + 2, TFT_BLACK);
+    
     // 影を描画（ボタンが押されていない時のみ）
     if (state != BUTTON_PRESSED && style.shadowOffset > 0) {
         drawShadow();
@@ -43,27 +47,32 @@ void ModernButton::drawBackground() {
     uint16_t color = getCurrentColor();
     int16_t drawX = x;
     int16_t drawY = y;
+    uint16_t drawWidth = width;
+    uint16_t drawHeight = height;
     
-    // 押された時は少しずらす（押し込み効果）
+    // 押された時はサイズを縮小（中心を保つ）
     if (state == BUTTON_PRESSED) {
-        drawX += 2;
-        drawY += 2;
+        const uint8_t shrinkAmount = 4;  // 縮小量（左右上下それぞれ2ピクセルずつ）
+        drawX += shrinkAmount / 2;
+        drawY += shrinkAmount / 2;
+        drawWidth -= shrinkAmount;
+        drawHeight -= shrinkAmount;
     }
     
     // 角丸の背景
     if (style.cornerRadius > 0) {
-        tft->fillRoundRect(drawX, drawY, width, height, style.cornerRadius, color);
+        tft->fillRoundRect(drawX, drawY, drawWidth, drawHeight, style.cornerRadius, color);
         
         // ボーダーを描画
         if (style.borderWidth > 0) {
-            tft->drawRoundRect(drawX, drawY, width, height, style.cornerRadius, style.borderColor);
+            tft->drawRoundRect(drawX, drawY, drawWidth, drawHeight, style.cornerRadius, style.borderColor);
         }
     } else {
-        tft->fillRect(drawX, drawY, width, height, color);
+        tft->fillRect(drawX, drawY, drawWidth, drawHeight, color);
         
         // ボーダーを描画
         if (style.borderWidth > 0) {
-            tft->drawRect(drawX, drawY, width, height, style.borderColor);
+            tft->drawRect(drawX, drawY, drawWidth, drawHeight, style.borderColor);
         }
     }
     
@@ -71,8 +80,8 @@ void ModernButton::drawBackground() {
     if (state == BUTTON_NORMAL && enabled) {
         // 上部に薄い白のラインでハイライト効果
         uint16_t highlightColor = tft->color565(255, 255, 255);
-        tft->drawFastHLine(drawX + style.cornerRadius, drawY + 1, width - 2 * style.cornerRadius, highlightColor);
-        tft->drawFastHLine(drawX + style.cornerRadius, drawY + 2, width - 2 * style.cornerRadius, highlightColor);
+        tft->drawFastHLine(drawX + style.cornerRadius, drawY + 1, drawWidth - 2 * style.cornerRadius, highlightColor);
+        tft->drawFastHLine(drawX + style.cornerRadius, drawY + 2, drawWidth - 2 * style.cornerRadius, highlightColor);
     }
 }
 
@@ -81,11 +90,16 @@ void ModernButton::drawText() {
     
     int16_t drawX = x;
     int16_t drawY = y;
+    uint16_t drawWidth = width;
+    uint16_t drawHeight = height;
     
-    // 押された時は少しずらす
+    // 押された時はサイズを縮小（中心を保つ）
     if (state == BUTTON_PRESSED) {
-        drawX += 2;
-        drawY += 2;
+        const uint8_t shrinkAmount = 4;
+        drawX += shrinkAmount / 2;
+        drawY += shrinkAmount / 2;
+        drawWidth -= shrinkAmount;
+        drawHeight -= shrinkAmount;
     }
     
     // 日本語フォントを設定（日本語が含まれている場合）
@@ -106,9 +120,14 @@ void ModernButton::drawText() {
         tft->setTextSize(style.fontSize);
     }
     
-    // テキストの中央配置を計算
+    // テキストの中央配置を計算（縮小時は新しいサイズで計算）
     int16_t textX, textY;
-    getTextBounds(textX, textY);
+    if (state == BUTTON_PRESSED) {
+        // 縮小したボタンサイズでテキスト位置を再計算
+        getTextBoundsForSize(textX, textY, drawWidth, drawHeight);
+    } else {
+        getTextBounds(textX, textY);
+    }
     
     // テキスト色を設定
     uint16_t textColor = enabled ? style.textColor : tft->color565(128, 128, 128);
@@ -140,6 +159,10 @@ uint16_t ModernButton::getCurrentColor() const {
 }
 
 void ModernButton::getTextBounds(int16_t& tx, int16_t& ty) {
+    getTextBoundsForSize(tx, ty, width, height);
+}
+
+void ModernButton::getTextBoundsForSize(int16_t& tx, int16_t& ty, uint16_t buttonWidth, uint16_t buttonHeight) {
     // 日本語フォントかどうかを判定
     bool hasJapanese = false;
     for (size_t i = 0; i < text.length(); i++) {
@@ -169,9 +192,9 @@ void ModernButton::getTextBounds(int16_t& tx, int16_t& ty) {
         textHeight = 8 * style.fontSize;
     }
     
-    // 中央配置の計算
-    tx = (width - textWidth) / 2;
-    ty = (height - textHeight) / 2;
+    // 中央配置の計算（指定されたボタンサイズに対して）
+    tx = (buttonWidth - textWidth) / 2;
+    ty = (buttonHeight - textHeight) / 2;
     
     // 最小マージンを確保
     if (tx < 4) tx = 4;

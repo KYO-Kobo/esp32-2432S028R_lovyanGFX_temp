@@ -108,6 +108,7 @@ private:
     
     // 文字の中央配置計算
     void getTextBounds(int16_t& tx, int16_t& ty);
+    void getTextBoundsForSize(int16_t& tx, int16_t& ty, uint16_t buttonWidth, uint16_t buttonHeight);
 };
 
 #endif // MODERN_BUTTON_H
