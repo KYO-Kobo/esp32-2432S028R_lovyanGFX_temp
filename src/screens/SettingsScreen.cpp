@@ -2,7 +2,11 @@
 #include <LovyanGFX.hpp>
 #include "SettingsScreen.h"
 #include "../ui/components/ModernButton.h"
+#include "../shared/EventQueue.h"
 #include <Arduino.h>
+
+// グローバルイベントキュー（外部で定義）
+extern EventQueue* g_touchEventQueue;
 
 // スワイプ検出の閾値
 #define SWIPE_THRESHOLD 50  // 最小スワイプ距離
@@ -91,6 +95,24 @@ void SettingsScreen::createButtons() {
         // TODO: 実際の保存処理
     });
     buttons.push_back(std::move(saveBtn));
+    
+    // ボタン5: 閉じる（右上、リセットボタンと同じスタイル）
+    auto closeBtn = std::unique_ptr<ModernButton>(
+        new ModernButton(tft, tft->width() - 70, 10, 60, 30, "閉じる")
+    );
+    ButtonStyle closeStyle;
+    closeStyle.normalColor = tft->color565(244, 67, 54);     // Material Red
+    closeStyle.pressedColor = tft->color565(211, 47, 47);    // Darker Red
+    closeStyle.cornerRadius = 0;  // 角なし
+    closeStyle.shadowOffset = 3;
+    closeStyle.borderWidth = 2;
+    closeStyle.borderColor = tft->color565(183, 28, 28);     // Dark Red Border
+    closeBtn->setStyle(closeStyle);
+    closeBtn->setOnClick([this]() {
+        Serial.println("Close button pressed - returning to Home");
+        returnToHome();
+    });
+    buttons.push_back(std::move(closeBtn));
 }
 
 void SettingsScreen::init() {
@@ -264,5 +286,14 @@ void SettingsScreen::detectSwipeGesture(int32_t endX, int32_t endY) {
 }
 
 void SettingsScreen::returnToHome() {
-    // DisplayManagerがこのイベントを処理して画面遷移を行う
+    // ホーム画面に戻るイベントを送信
+    Event returnEvent;
+    returnEvent.type = EVENT_SCREEN_CHANGE;
+    returnEvent.data.screenChange.targetScreen = SCREEN_HOME;
+    returnEvent.data.screenChange.transition = TRANSITION_NONE;
+    
+    // イベントキューに送信
+    if (g_touchEventQueue) {
+        g_touchEventQueue->send(returnEvent);
+    }
 }

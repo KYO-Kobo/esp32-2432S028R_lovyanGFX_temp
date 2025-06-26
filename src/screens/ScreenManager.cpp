@@ -80,6 +80,13 @@ void ScreenManager::handleEvent(const Event& event) {
         return;
     }
     
+    // 画面遷移イベントの処理
+    if (event.type == EVENT_SCREEN_CHANGE) {
+        transitionTo((ScreenID)event.data.screenChange.targetScreen, 
+                    (TransitionType)event.data.screenChange.transition);
+        return;
+    }
+    
     // スワイプイベントの特別処理
     if (event.type == EVENT_GESTURE_SWIPE || 
         (event.type == EVENT_TOUCH_UP && currentScreen)) {

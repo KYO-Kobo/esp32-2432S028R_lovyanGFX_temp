@@ -12,7 +12,8 @@ enum EventType {
     EVENT_TOUCH_DRAG,
     EVENT_GESTURE_SWIPE,
     EVENT_DISPLAY_UPDATE,
-    EVENT_SYSTEM_STATUS
+    EVENT_SYSTEM_STATUS,
+    EVENT_SCREEN_CHANGE
 };
 
 // タッチイベントデータ
@@ -43,12 +44,20 @@ struct GestureEvent {
     uint32_t duration_ms;
 };
 
+// 画面遷移イベントデータ
+struct ScreenChangeEvent {
+    EventType type;
+    int targetScreen;  // ScreenID
+    int transition;    // TransitionType
+};
+
 // 汎用イベント構造体
 struct Event {
     EventType type;
     union {
         TouchEvent touch;
         GestureEvent gesture;
+        ScreenChangeEvent screenChange;
     } data;
 };
 
