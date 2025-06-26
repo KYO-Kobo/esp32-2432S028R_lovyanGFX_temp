@@ -1,6 +1,7 @@
 #define LGFX_USE_V1
 #include <LovyanGFX.hpp>
 #include "SettingsScreen.h"
+#include "../ui/components/ModernButton.h"
 #include <Arduino.h>
 
 // スワイプ検出の閾値
@@ -11,6 +12,85 @@ SettingsScreen::SettingsScreen(LGFX* display)
     : BaseScreen(display, SCREEN_SETTINGS),
       touchStartX(0), touchStartY(0), touchStartTime(0), isTouching(false),
       brightness(80), touchSound(false) {
+    
+    // ボタンを作成
+    createButtons();
+}
+
+void SettingsScreen::createButtons() {
+    // ボタン1: 明るさ調整（青いボタン）
+    auto brightnessBtn = std::unique_ptr<ModernButton>(
+        new ModernButton(tft, 20, 100, 130, 40, "明るさ: 80%")
+    );
+    ButtonStyle blueStyle;
+    blueStyle.normalColor = tft->color565(33, 150, 243);    // Material Blue
+    blueStyle.pressedColor = tft->color565(25, 118, 210);   // Darker Blue
+    blueStyle.cornerRadius = 10;
+    blueStyle.shadowOffset = 4;
+    brightnessBtn->setStyle(blueStyle);
+    brightnessBtn->setOnClick([this]() {
+        brightness = (brightness + 20) % 100;
+        if (brightness == 0) brightness = 20;
+        char buf[20];
+        sprintf(buf, "明るさ: %d%%", brightness);
+        buttons[0]->setText(buf);
+        Serial.printf("Brightness changed to %d%%\n", brightness);
+    });
+    buttons.push_back(std::move(brightnessBtn));
+    
+    // ボタン2: タッチ音設定（緑のボタン）
+    auto soundBtn = std::unique_ptr<ModernButton>(
+        new ModernButton(tft, 170, 100, 130, 40, "タッチ音: OFF")
+    );
+    ButtonStyle greenStyle;
+    greenStyle.normalColor = tft->color565(76, 175, 80);    // Material Green
+    greenStyle.pressedColor = tft->color565(56, 142, 60);   // Darker Green
+    greenStyle.cornerRadius = 10;
+    greenStyle.shadowOffset = 4;
+    soundBtn->setStyle(greenStyle);
+    soundBtn->setOnClick([this]() {
+        touchSound = !touchSound;
+        buttons[1]->setText(touchSound ? "タッチ音: ON" : "タッチ音: OFF");
+        Serial.printf("Touch sound: %s\n", touchSound ? "ON" : "OFF");
+    });
+    buttons.push_back(std::move(soundBtn));
+    
+    // ボタン3: リセット（赤いボタン、角なし）
+    auto resetBtn = std::unique_ptr<ModernButton>(
+        new ModernButton(tft, 20, 155, 130, 35, "リセット")
+    );
+    ButtonStyle redStyle;
+    redStyle.normalColor = tft->color565(244, 67, 54);     // Material Red
+    redStyle.pressedColor = tft->color565(211, 47, 47);    // Darker Red
+    redStyle.cornerRadius = 0;  // 角なし
+    redStyle.shadowOffset = 3;
+    redStyle.borderWidth = 2;
+    redStyle.borderColor = tft->color565(183, 28, 28);     // Dark Red Border
+    resetBtn->setStyle(redStyle);
+    resetBtn->setOnClick([this]() {
+        brightness = 80;
+        touchSound = false;
+        buttons[0]->setText("明るさ: 80%");
+        buttons[1]->setText("タッチ音: OFF");
+        Serial.println("Settings reset to default");
+    });
+    buttons.push_back(std::move(resetBtn));
+    
+    // ボタン4: 保存（紫のボタン、ultra-thin）
+    auto saveBtn = std::unique_ptr<ModernButton>(
+        new ModernButton(tft, 170, 155, 130, 35, "保存")
+    );
+    ButtonStyle purpleStyle;
+    purpleStyle.normalColor = tft->color565(156, 39, 176);  // Material Purple
+    purpleStyle.pressedColor = tft->color565(123, 31, 162); // Darker Purple
+    purpleStyle.cornerRadius = 18;  // 完全に丸い角
+    purpleStyle.shadowOffset = 2;   // 薄い影（ultra-thin）
+    saveBtn->setStyle(purpleStyle);
+    saveBtn->setOnClick([this]() {
+        Serial.println("Settings saved!");
+        // TODO: 実際の保存処理
+    });
+    buttons.push_back(std::move(saveBtn));
 }
 
 void SettingsScreen::init() {
@@ -33,27 +113,19 @@ void SettingsScreen::init() {
     // 枠線を描画
     tft->drawRect(5, 75, tft->width() - 10, 2, TFT_DARKGREY);
     
-    // 設定項目
-    tft->setTextColor(TFT_WHITE);
-    tft->setCursor(10, 85);
-    tft->println("設定項目:");
-    
-    // 明度設定
-    tft->setCursor(20, 105);
-    tft->printf("画面の明るさ: %d%%", brightness);
-    
-    // タッチ音設定
-    tft->setCursor(20, 125);
-    tft->printf("タッチ音: %s", touchSound ? "ON" : "OFF");
-    
     // スワイプ案内（画面下部）
     tft->setTextColor(TFT_YELLOW);
-    tft->setCursor(10, 160);
+    tft->setCursor(10, 205);
     tft->println("↑↓←→ スワイプでホームへ");
     
     // デフォルトフォントに戻す
     tft->setFont(nullptr);
     tft->setTextSize(1);
+    
+    // ボタンを描画
+    for (auto& button : buttons) {
+        button->draw();
+    }
 }
 
 void SettingsScreen::draw() {
@@ -70,23 +142,46 @@ void SettingsScreen::update() {
 
 void SettingsScreen::handleEvent(const Event& event) {
     switch (event.type) {
-        case EVENT_TOUCH_DOWN:
+        case EVENT_TOUCH_DOWN: {
             // タッチ開始位置を記録
             touchStartX = event.data.touch.x;
             touchStartY = event.data.touch.y;
             touchStartTime = millis();
             isTouching = true;
-            break;
             
-        case EVENT_TOUCH_UP:
-            if (isTouching) {
-                // スワイプジェスチャーを検出
-                detectSwipeGesture(event.data.touch.x, event.data.touch.y);
-                isTouching = false;
+            // ボタンのタッチ処理
+            for (auto& button : buttons) {
+                button->handleTouch(event.data.touch.x, event.data.touch.y, true);
             }
             break;
+        }
             
-        case EVENT_GESTURE_SWIPE:
+        case EVENT_TOUCH_MOVE: {
+            // ボタンのタッチ移動処理
+            for (auto& button : buttons) {
+                button->handleTouch(event.data.touch.x, event.data.touch.y, true);
+            }
+            break;
+        }
+            
+        case EVENT_TOUCH_UP: {
+            // ボタンのタッチ終了処理
+            bool buttonHandled = false;
+            for (auto& button : buttons) {
+                if (button->handleTouch(event.data.touch.x, event.data.touch.y, false)) {
+                    buttonHandled = true;
+                }
+            }
+            
+            // ボタンが処理しなかった場合、スワイプジェスチャーを検出
+            if (isTouching && !buttonHandled) {
+                detectSwipeGesture(event.data.touch.x, event.data.touch.y);
+            }
+            isTouching = false;
+            break;
+        }
+            
+        case EVENT_GESTURE_SWIPE: {
             // TouchManagerからのジェスチャーイベント
             switch (event.data.gesture.direction) {
                 case GestureEvent::GESTURE_UP:
@@ -105,6 +200,7 @@ void SettingsScreen::handleEvent(const Event& event) {
                     break;
             }
             break;
+        }
             
         default:
             break;

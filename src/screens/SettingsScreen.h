@@ -2,6 +2,11 @@
 #define SETTINGS_SCREEN_H
 
 #include "BaseScreen.h"
+#include <memory>
+#include <vector>
+
+// 前方宣言
+class ModernButton;
 
 class SettingsScreen : public BaseScreen {
 private:
@@ -14,6 +19,9 @@ private:
     // 設定項目
     int brightness;
     bool touchSound;
+    
+    // UIコンポーネント
+    std::vector<std::unique_ptr<ModernButton>> buttons;
     
 public:
     SettingsScreen(LGFX* display);
@@ -35,6 +43,9 @@ public:
     void onSwipeRight() override;
     
 private:
+    // ボタンの作成
+    void createButtons();
+    
     // スワイプジェスチャーの検出
     void detectSwipeGesture(int32_t endX, int32_t endY);
     
