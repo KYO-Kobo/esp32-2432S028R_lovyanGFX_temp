@@ -1,6 +1,6 @@
 #define LGFX_USE_V1
 #include <LovyanGFX.hpp>
-#include "SettingsScreen.h"
+#include "MenuScreen.h"
 #include "../ui/components/ModernButton.h"
 #include "../shared/EventQueue.h"
 #include <Arduino.h>
@@ -12,8 +12,8 @@ extern EventQueue* g_touchEventQueue;
 #define SWIPE_THRESHOLD 50  // 最小スワイプ距離
 #define SWIPE_TIME_LIMIT 500  // 最大スワイプ時間（ms）
 
-SettingsScreen::SettingsScreen(LGFX* display) 
-    : BaseScreen(display, SCREEN_SETTINGS),
+MenuScreen::MenuScreen(LGFX* display) 
+    : BaseScreen(display, SCREEN_MENU),
       touchStartX(0), touchStartY(0), touchStartTime(0), isTouching(false),
       brightness(80), touchSound(false) {
     
@@ -21,7 +21,7 @@ SettingsScreen::SettingsScreen(LGFX* display)
     createButtons();
 }
 
-void SettingsScreen::createButtons() {
+void MenuScreen::createButtons() {
     // ボタン1: 明るさ調整（青いボタン）
     auto brightnessBtn = std::unique_ptr<ModernButton>(
         new ModernButton(tft, 20, 70, 130, 40, "明るさ: 80%")
@@ -76,7 +76,7 @@ void SettingsScreen::createButtons() {
         touchSound = false;
         buttons[0]->setText("明るさ: 80%");
         buttons[1]->setText("タッチ音: OFF");
-        Serial.println("Settings reset to default");
+        Serial.println("Menu reset to default");
     });
     buttons.push_back(std::move(resetBtn));
     
@@ -91,7 +91,7 @@ void SettingsScreen::createButtons() {
     purpleStyle.shadowOffset = 2;   // 薄い影（ultra-thin）
     saveBtn->setStyle(purpleStyle);
     saveBtn->setOnClick([this]() {
-        Serial.println("Settings saved!");
+        Serial.println("Menu saved!");
         // TODO: 実際の保存処理
     });
     buttons.push_back(std::move(saveBtn));
@@ -115,14 +115,14 @@ void SettingsScreen::createButtons() {
     buttons.push_back(std::move(closeBtn));
 }
 
-void SettingsScreen::init() {
+void MenuScreen::init() {
     tft->fillScreen(TFT_BLACK);
     tft->setTextColor(TFT_WHITE);
     
     // 日本語フォントを設定
     tft->setFont(&fonts::lgfxJapanGothic_16);
     tft->setCursor(10, 20);
-    tft->println("設定画面");
+    tft->println("メニュー");
     
     // 枠線を描画
     tft->drawRect(5, 50, tft->width() - 10, 2, TFT_DARKGREY);
@@ -137,7 +137,7 @@ void SettingsScreen::init() {
     }
 }
 
-void SettingsScreen::draw() {
+void MenuScreen::draw() {
     // 必要に応じて画面全体を再描画
     if (needsRedraw) {
         init();
@@ -145,11 +145,11 @@ void SettingsScreen::draw() {
     }
 }
 
-void SettingsScreen::update() {
+void MenuScreen::update() {
     // 状態更新（必要に応じて）
 }
 
-void SettingsScreen::handleEvent(const Event& event) {
+void MenuScreen::handleEvent(const Event& event) {
     switch (event.type) {
         case EVENT_TOUCH_DOWN: {
             // タッチ開始位置を記録
@@ -216,36 +216,36 @@ void SettingsScreen::handleEvent(const Event& event) {
     }
 }
 
-void SettingsScreen::onEnter() {
-    Serial.println("Entered Settings Screen");
+void MenuScreen::onEnter() {
+    Serial.println("Entered Menu Screen");
     needsRedraw = true;
 }
 
-void SettingsScreen::onExit() {
-    Serial.println("Exiting Settings Screen");
+void MenuScreen::onExit() {
+    Serial.println("Exiting Menu Screen");
 }
 
-void SettingsScreen::onSwipeUp() {
-    Serial.println("Settings: Swipe Up - return to Home");
+void MenuScreen::onSwipeUp() {
+    Serial.println("Menu: Swipe Up - return to Home");
     returnToHome();
 }
 
-void SettingsScreen::onSwipeDown() {
-    Serial.println("Settings: Swipe Down - return to Home");
+void MenuScreen::onSwipeDown() {
+    Serial.println("Menu: Swipe Down - return to Home");
     returnToHome();
 }
 
-void SettingsScreen::onSwipeLeft() {
-    Serial.println("Settings: Swipe Left - return to Home");
+void MenuScreen::onSwipeLeft() {
+    Serial.println("Menu: Swipe Left - return to Home");
     returnToHome();
 }
 
-void SettingsScreen::onSwipeRight() {
-    Serial.println("Settings: Swipe Right - return to Home");
+void MenuScreen::onSwipeRight() {
+    Serial.println("Menu: Swipe Right - return to Home");
     returnToHome();
 }
 
-void SettingsScreen::detectSwipeGesture(int32_t endX, int32_t endY) {
+void MenuScreen::detectSwipeGesture(int32_t endX, int32_t endY) {
     if (!isTouching) return;
     
     uint32_t swipeDuration = millis() - touchStartTime;
@@ -272,7 +272,7 @@ void SettingsScreen::detectSwipeGesture(int32_t endX, int32_t endY) {
     }
 }
 
-void SettingsScreen::returnToHome() {
+void MenuScreen::returnToHome() {
     // ホーム画面に戻るイベントを送信
     Event returnEvent;
     returnEvent.type = EVENT_SCREEN_CHANGE;

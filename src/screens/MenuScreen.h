@@ -1,5 +1,5 @@
-#ifndef SETTINGS_SCREEN_H
-#define SETTINGS_SCREEN_H
+#ifndef MENU_SCREEN_H
+#define MENU_SCREEN_H
 
 #include "BaseScreen.h"
 #include <memory>
@@ -8,7 +8,7 @@
 // 前方宣言
 class ModernButton;
 
-class SettingsScreen : public BaseScreen {
+class MenuScreen : public BaseScreen {
 private:
     // タッチ開始位置（スワイプ検出用）
     int32_t touchStartX;
@@ -24,7 +24,7 @@ private:
     std::vector<std::unique_ptr<ModernButton>> buttons;
     
 public:
-    SettingsScreen(LGFX* display);
+    MenuScreen(LGFX* display);
     
     // BaseScreenの実装
     void init() override;
@@ -53,4 +53,4 @@ private:
     void returnToHome();
 };
 
-#endif // SETTINGS_SCREEN_H
+#endif // MENU_SCREEN_H

@@ -14,7 +14,7 @@ using LGFX = lgfx::v1::LGFX_Device;
 // 画面IDの定義
 enum ScreenID {
     SCREEN_HOME = 0,
-    SCREEN_SETTINGS,
+    SCREEN_MENU,
     SCREEN_CALIBRATION,
     SCREEN_INFO,
     SCREEN_COUNT

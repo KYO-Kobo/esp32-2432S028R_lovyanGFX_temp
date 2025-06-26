@@ -74,12 +74,12 @@ void DisplayManager::onSwipeDetected(int direction) {
     
     ScreenID currentScreen = screenManager->getCurrentScreenId();
     
-    // ホーム画面で上スワイプ → 設定画面
+    // ホーム画面で上スワイプ → メニュー画面
     if (currentScreen == SCREEN_HOME && direction == GestureEvent::GESTURE_UP) {
-        screenManager->transitionTo(SCREEN_SETTINGS, TRANSITION_SLIDE_UP);
+        screenManager->transitionTo(SCREEN_MENU, TRANSITION_SLIDE_UP);
     }
-    // 設定画面で任意方向のスワイプ → ホーム画面
-    else if (currentScreen == SCREEN_SETTINGS) {
+    // メニュー画面で任意方向のスワイプ → ホーム画面
+    else if (currentScreen == SCREEN_MENU) {
         screenManager->transitionTo(SCREEN_HOME, TRANSITION_SLIDE_DOWN);
     }
 }

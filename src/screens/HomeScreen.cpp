@@ -37,7 +37,7 @@ void HomeScreen::init() {
     // スワイプ案内
     tft->setTextColor(TFT_CYAN);
     tft->setCursor(10, 95);
-    tft->println("↑ 上にスワイプで設定画面へ");
+    tft->println("↑ 上にスワイプでメニューへ");
     
     // 画面情報表示
     tft->setTextColor(TFT_WHITE);

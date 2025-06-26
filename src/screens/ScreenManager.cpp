@@ -2,7 +2,7 @@
 #include <LovyanGFX.hpp>
 #include "ScreenManager.h"
 #include "HomeScreen.h"
-#include "SettingsScreen.h"
+#include "MenuScreen.h"
 #include <Arduino.h>
 
 ScreenManager::ScreenManager(LGFX* display) 
@@ -16,7 +16,7 @@ ScreenManager::~ScreenManager() {
 void ScreenManager::init() {
     // 画面を登録
     registerScreen(SCREEN_HOME, std::unique_ptr<BaseScreen>(new HomeScreen(tft)));
-    registerScreen(SCREEN_SETTINGS, std::unique_ptr<BaseScreen>(new SettingsScreen(tft)));
+    registerScreen(SCREEN_MENU, std::unique_ptr<BaseScreen>(new MenuScreen(tft)));
     
     // ホーム画面から開始
     transitionTo(SCREEN_HOME);
@@ -143,11 +143,11 @@ void ScreenManager::handleSwipeEvent(const Event& event) {
         }
     }
     
-    // 設定画面での任意方向スワイプ → ホーム画面
-    if (currentId == SCREEN_SETTINGS) {
-        SettingsScreen* settingsScreen = static_cast<SettingsScreen*>(currentScreen);
-        if (settingsScreen) {
-            // SettingsScreenのhandleEventで処理される
+    // メニュー画面での任意方向スワイプ → ホーム画面
+    if (currentId == SCREEN_MENU) {
+        MenuScreen* menuScreen = static_cast<MenuScreen*>(currentScreen);
+        if (menuScreen) {
+            // MenuScreenのhandleEventで処理される
         }
     }
     
