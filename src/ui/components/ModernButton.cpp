@@ -172,25 +172,23 @@ void ModernButton::getTextBoundsForSize(int16_t& tx, int16_t& ty, uint16_t butto
         }
     }
     
-    int16_t textWidth, textHeight;
+    // 現在のフォント設定を保存
+    const lgfx::v1::IFont* originalFont = tft->getFont();
     
+    // 実際に使用するフォントを設定して正確な幅を測定
     if (hasJapanese && style.useJapaneseFont) {
-        // 日本語フォントのサイズ（lgfxJapanGothic_12）
-        // 日本語文字は約12ピクセル、ASCII文字は約6ピクセル
-        textWidth = 0;
-        for (size_t i = 0; i < text.length(); i++) {
-            if ((unsigned char)text[i] >= 0x80) {
-                textWidth += 12;  // 日本語文字
-            } else {
-                textWidth += 6;   // ASCII文字
-            }
-        }
-        textHeight = 16;  // 日本語フォントの高さ
+        tft->setFont(&fonts::lgfxJapanGothic_12);
     } else {
-        // デフォルトフォントのサイズ
-        textWidth = text.length() * 6 * style.fontSize;
-        textHeight = 8 * style.fontSize;
+        tft->setFont(nullptr);
+        tft->setTextSize(style.fontSize);
     }
+    
+    // LovyanGFXのtextWidth()とfontHeight()を使用して正確なサイズを取得
+    int32_t textWidth = tft->textWidth(text.c_str());
+    int32_t textHeight = tft->fontHeight();
+    
+    // フォント設定を元に戻す
+    tft->setFont(originalFont);
     
     // 中央配置の計算（指定されたボタンサイズに対して）
     tx = (buttonWidth - textWidth) / 2;
