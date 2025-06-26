@@ -88,6 +88,24 @@ void ModernButton::drawText() {
         drawY += 2;
     }
     
+    // 日本語フォントを設定（日本語が含まれている場合）
+    bool hasJapanese = false;
+    for (size_t i = 0; i < text.length(); i++) {
+        if ((unsigned char)text[i] >= 0x80) {
+            hasJapanese = true;
+            break;
+        }
+    }
+    
+    if (hasJapanese && style.useJapaneseFont) {
+        // 日本語フォントを使用
+        tft->setFont(&fonts::lgfxJapanGothic_12);
+    } else {
+        // デフォルトフォント
+        tft->setFont(nullptr);
+        tft->setTextSize(style.fontSize);
+    }
+    
     // テキストの中央配置を計算
     int16_t textX, textY;
     getTextBounds(textX, textY);
@@ -95,11 +113,16 @@ void ModernButton::drawText() {
     // テキスト色を設定
     uint16_t textColor = enabled ? style.textColor : tft->color565(128, 128, 128);
     tft->setTextColor(textColor);
-    tft->setTextSize(style.fontSize);
     
     // テキストを描画
     tft->setCursor(drawX + textX, drawY + textY);
     tft->print(text.c_str());
+    
+    // フォントをリセット
+    if (hasJapanese && style.useJapaneseFont) {
+        tft->setFont(nullptr);
+        tft->setTextSize(1);
+    }
 }
 
 uint16_t ModernButton::getCurrentColor() const {
@@ -117,9 +140,34 @@ uint16_t ModernButton::getCurrentColor() const {
 }
 
 void ModernButton::getTextBounds(int16_t& tx, int16_t& ty) {
-    // テキストサイズを計算（簡易版）
-    int16_t textWidth = text.length() * 6 * style.fontSize;  // 各文字約6ピクセル
-    int16_t textHeight = 8 * style.fontSize;  // 高さ約8ピクセル
+    // 日本語フォントかどうかを判定
+    bool hasJapanese = false;
+    for (size_t i = 0; i < text.length(); i++) {
+        if ((unsigned char)text[i] >= 0x80) {
+            hasJapanese = true;
+            break;
+        }
+    }
+    
+    int16_t textWidth, textHeight;
+    
+    if (hasJapanese && style.useJapaneseFont) {
+        // 日本語フォントのサイズ（lgfxJapanGothic_12）
+        // 日本語文字は約12ピクセル、ASCII文字は約6ピクセル
+        textWidth = 0;
+        for (size_t i = 0; i < text.length(); i++) {
+            if ((unsigned char)text[i] >= 0x80) {
+                textWidth += 12;  // 日本語文字
+            } else {
+                textWidth += 6;   // ASCII文字
+            }
+        }
+        textHeight = 16;  // 日本語フォントの高さ
+    } else {
+        // デフォルトフォントのサイズ
+        textWidth = text.length() * 6 * style.fontSize;
+        textHeight = 8 * style.fontSize;
+    }
     
     // 中央配置の計算
     tx = (width - textWidth) / 2;

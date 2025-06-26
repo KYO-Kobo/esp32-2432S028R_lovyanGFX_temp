@@ -45,6 +45,7 @@ struct ButtonStyle {
     // フォント
     uint8_t fontSize = 1;                // テキストサイズ
     bool useBoldFont = false;            // 太字フォント使用
+    bool useJapaneseFont = true;         // 日本語フォント使用
 };
 
 class ModernButton {
