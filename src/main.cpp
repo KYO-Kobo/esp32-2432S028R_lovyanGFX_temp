@@ -1,5 +1,8 @@
 #define LGFX_USE_V1
 #include <LovyanGFX.hpp>
+#include "core/Core0Manager.h"
+#include "core/Core1Manager.h"
+#include "shared/EventQueue.h"
 
 // Pin definitions for ESP32-3224S028R
 #define LCD_CS 15
@@ -13,7 +16,7 @@
 #define TOUCH_CS 33
 #define TOUCH_IRQ 32
 
-class LGFX : public lgfx::LGFX_Device
+class LGFX_ESP32 : public lgfx::LGFX_Device
 {
     lgfx::Panel_ILI9341 _panel_instance;
     lgfx::Bus_SPI _bus_instance;
@@ -21,7 +24,7 @@ class LGFX : public lgfx::LGFX_Device
     lgfx::Touch_XPT2046 _touch_instance;
 
 public:
-    LGFX(void)
+    LGFX_ESP32(void)
     {
         {
             auto cfg = _bus_instance.config();
@@ -95,90 +98,75 @@ public:
     }
 };
 
-LGFX tft;
+LGFX_ESP32 tft;
+
+// デュアルコアマネージャー
+Core0Manager* core0Manager = nullptr;
+Core1Manager* core1Manager = nullptr;
 
 void setup()
 {
     Serial.begin(115200);
     delay(1000);  // シリアルモニター接続待ち
     
-    Serial.println("Starting setup...");
+    Serial.println("=== Dual Core Touch Display Starting ===");
+    Serial.printf("CPU Frequency: %d MHz\n", getCpuFrequencyMhz());
+    Serial.printf("Free Heap: %d bytes\n", esp_get_free_heap_size());
     
+    // ディスプレイとタッチパネルの初期化
     tft.begin();
-    tft.setRotation(1);  // 縦向きに変更
+    tft.setRotation(1);  // 横向き
     tft.fillScreen(TFT_BLACK);
-    tft.setTextColor(TFT_WHITE);
-    tft.setTextSize(2);
-    tft.setCursor(10, 10);
-    tft.println("Hello World!");
-    
-    // 画面サイズを表示
-    Serial.printf("Screen size: %d x %d\n", tft.width(), tft.height());
     
     // タッチ初期化状態を確認
     lgfx::touch_point_t tp;
     uint8_t touch_state = tft.getTouchRaw(&tp);
     Serial.printf("Touch initialized: %s\n", touch_state ? "Yes" : "No");
     
-    // タッチ情報表示エリアを描画
-    tft.setTextSize(1);
-    tft.setCursor(10, 50);
-    tft.println("Touch the screen...");
-    tft.setCursor(10, 65);
-    tft.printf("Screen: %d x %d", tft.width(), tft.height());
+    // グローバルイベントキューを作成
+    g_touchEventQueue = new EventQueue(64);  // 64イベント分のキュー
+    Serial.println("Event queue created");
     
-    Serial.println("Setup complete");
-    Serial.println("Touch detection started");
+    // Core 0 Manager（表示系）を初期化
+    core0Manager = new Core0Manager(static_cast<LGFX*>(&tft));
+    core0Manager->init();
     
-    // タッチキャリブレーション値を表示（デバッグ用）
-    tft.setCursor(10, 130);
-    tft.println("Touch pins: CLK=25, DIN=32, DO=39, CS=33");
+    // Core 1 Manager（タッチ入力系）を初期化
+    core1Manager = new Core1Manager(static_cast<LGFX*>(&tft));
+    core1Manager->init();
+    
+    // 各コアでタスクを開始
+    Serial.println("Starting dual-core tasks...");
+    core0Manager->startTasks();  // Core 0: 表示タスク
+    core1Manager->startTasks();  // Core 1: タッチタスク
+    
+    Serial.println("=== Setup complete ===");
+    Serial.printf("Core 0: Display Processing\n");
+    Serial.printf("Core 1: Touch Input Processing\n");
 }
 
 void loop()
 {
-    static uint32_t count = 0;
+    // メインループはタスク管理のみ
+    static uint32_t lastStatusUpdate = 0;
+    uint32_t now = millis();
     
-    // デバッグ用：タッチ時の生データを表示
-    lgfx::touch_point_t tp;
-    if (tft.getTouchRaw(&tp) && tp.size > 0) {
-        Serial.printf("Raw touch: x=%d, y=%d, size=%d\n", tp.x, tp.y, tp.size);
+    // 5秒ごとにステータスを表示
+    if (now - lastStatusUpdate > 5000) {
+        lastStatusUpdate = now;
         
-        // 画面上にRaw値も表示
-        tft.fillRect(10, 150, 300, 30, TFT_BLACK);
-        tft.setCursor(10, 150);
-        tft.setTextSize(1);
-        tft.setTextColor(TFT_YELLOW);
-        tft.printf("Raw: X=%d, Y=%d", tp.x, tp.y);
+        Serial.println("\n=== System Status ===");
+        Serial.printf("Uptime: %lu seconds\n", now / 1000);
+        Serial.printf("Free Heap: %d bytes\n", esp_get_free_heap_size());
+        Serial.printf("Event Queue Size: %d\n", g_touchEventQueue ? g_touchEventQueue->getCount() : 0);
+        
+        // タスク状態を表示
+        Serial.printf("Core 0 Stack High Water Mark: %d\n", 
+                     uxTaskGetStackHighWaterMark(nullptr));
+        Serial.printf("Core 1 Stack High Water Mark: %d\n", 
+                     uxTaskGetStackHighWaterMark(nullptr));
     }
     
-    // タッチ座標を取得
-    int32_t x, y;
-    if (tft.getTouch(&x, &y)) {
-        // シリアルモニターに座標を出力
-        Serial.printf("Touch detected: x=%d, y=%d\n", x, y);
-        
-        // 画面上の座標表示エリアをクリア
-        tft.fillRect(10, 70, 300, 60, TFT_BLACK);
-        
-        // 画面に座標を表示
-        tft.setTextColor(TFT_WHITE);
-        tft.setTextSize(1);
-        tft.setCursor(10, 70);
-        tft.printf("Touch Position:");
-        
-        tft.setCursor(10, 85);
-        tft.printf("X: %d", x);
-        
-        tft.setCursor(10, 100);
-        tft.printf("Y: %d", y);
-        
-        // タッチした位置に小さな円を描画
-        tft.fillCircle(x, y, 3, TFT_RED);
-        
-        // 連続タッチでの描画を防ぐため少し待機
-        delay(50);
-    }
-    
-    delay(10);  // CPU負荷軽減
+    // CPU負荷を下げるため待機
+    vTaskDelay(pdMS_TO_TICKS(1000));
 }
