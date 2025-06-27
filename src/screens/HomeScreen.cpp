@@ -2,6 +2,7 @@
 #include <LovyanGFX.hpp>
 #include "HomeScreen.h"
 #include "../display/DisplayManager.h"
+#include "../ui/components/Label.h"
 #include <Arduino.h>
 
 // スワイプ検出の閾値
@@ -12,7 +13,19 @@ HomeScreen::HomeScreen(LGFX* display)
     : BaseScreen(display, SCREEN_HOME),
       lastDisplayedX(-1), lastDisplayedY(-1),
       lastDisplayedRawX(-1), lastDisplayedRawY(-1),
-      touchStartX(0), touchStartY(0), touchStartTime(0), isTouching(false) {
+      touchStartX(0), touchStartY(0), touchStartTime(0), isTouching(false),
+      resetMessageStartTime(0) {
+    
+    // リセットメッセージ用のラベルを作成（幅0で自動調整）
+    resetMessageLabel.reset(new Label(display, 0, 0, 0, 0, "Device has been reset"));
+    resetMessageLabel->setTextColor(TFT_WHITE);
+    // 見やすい色の背景を設定（ダークブルー）
+    resetMessageLabel->setBackgroundColor(display->color565(0, 50, 100));
+    resetMessageLabel->setAlignment(Label::CENTER);
+    resetMessageLabel->setJapaneseFont(true);  // 日本語フォントを使用
+    resetMessageLabel->setFontSize(12);  // 12ピクセルフォントに変更
+    resetMessageLabel->setVisible(false);  // 初期状態では非表示
+    resetMessageLabel->centerInScreen(display);  // 画面中央に配置
 }
 
 void HomeScreen::init() {
@@ -63,10 +76,26 @@ void HomeScreen::draw() {
         init();
         needsRedraw = false;
     }
+    
+    // リセットメッセージを表示（表示中の場合）
+    if (resetMessageLabel && resetMessageLabel->isVisible()) {
+        resetMessageLabel->draw();
+        // フォントを確実にリセット
+        tft->setFont(nullptr);
+        tft->setTextSize(1);
+    }
 }
 
 void HomeScreen::update() {
-    // 状態更新（必要に応じて）
+    // リセットメッセージのタイムアウトチェック
+    if (resetMessageLabel && resetMessageLabel->isVisible() && resetMessageStartTime > 0) {
+        if (millis() - resetMessageStartTime > RESET_MESSAGE_DURATION) {
+            // メッセージを非表示にして、その部分を再描画
+            resetMessageLabel->setVisible(false);
+            needsRedraw = true;  // 画面全体を再描画してメッセージを消す
+            resetMessageStartTime = 0;
+        }
+    }
 }
 
 void HomeScreen::handleEvent(const Event& event) {
@@ -114,6 +143,11 @@ void HomeScreen::handleEvent(const Event& event) {
             }
             break;
             
+        case EVENT_SHOW_RESET_MESSAGE:
+            // リセットメッセージを表示
+            showResetMessage();
+            break;
+            
         default:
             break;
     }
@@ -147,9 +181,12 @@ void HomeScreen::updateTouchDisplay(int32_t x, int32_t y, int32_t raw_x, int32_t
         tft->fillRect(30, 165, 50, 12, TFT_BLACK);
     }
     
+    // フォントを確実に英語フォントに設定
+    tft->setFont(nullptr);
+    tft->setTextSize(1);
+    
     // 新しい座標を表示
     tft->setTextColor(TFT_WHITE);
-    tft->setTextSize(1);
     tft->setCursor(30, 150);
     tft->printf("%d", x);
     
@@ -187,4 +224,15 @@ void HomeScreen::detectSwipeGesture(int32_t endX, int32_t endY) {
     if (dy < -SWIPE_THRESHOLD && abs(dx) < abs(dy)) {
         onSwipeUp();
     }
+}
+
+void HomeScreen::showResetMessage() {
+    if (!resetMessageLabel) return;
+    
+    // メッセージを表示
+    resetMessageLabel->setVisible(true);
+    resetMessageLabel->draw();
+    
+    // タイマーを開始
+    resetMessageStartTime = millis();
 }

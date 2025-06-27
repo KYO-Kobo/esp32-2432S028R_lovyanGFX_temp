@@ -7,6 +7,7 @@
 
 // 前方宣言
 class ModernButton;
+class ConfirmDialog;
 
 class SettingsScreen : public BaseScreen {
 private:
@@ -21,6 +22,10 @@ private:
     
     // UIコンポーネント
     std::vector<std::unique_ptr<ModernButton>> buttons;
+    
+    // 確認ダイアログ
+    std::unique_ptr<ConfirmDialog> confirmDialog;
+    bool showingDialog;
     
 public:
     SettingsScreen(LGFX* display);

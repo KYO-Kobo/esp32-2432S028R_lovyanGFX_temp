@@ -13,8 +13,9 @@ void ModernButton::draw() {
     if (!visible || !tft) return;
     
     // ボタン全体の領域をクリア（影も含む）
-    int16_t clearSize = style.shadowOffset + 2;  // 少し余裕を持たせる
-    tft->fillRect(x - 1, y - 1, width + clearSize + 2, height + clearSize + 2, TFT_BLACK);
+    // 注: ダイアログなど白い背景で使用する場合は、このクリア処理をスキップ
+    // int16_t clearSize = style.shadowOffset + 2;  // 少し余裕を持たせる
+    // tft->fillRect(x - 1, y - 1, width + clearSize + 2, height + clearSize + 2, TFT_BLACK);
     
     // 影を描画（ボタンが押されていない時のみ）
     if (state != BUTTON_PRESSED && style.shadowOffset > 0) {

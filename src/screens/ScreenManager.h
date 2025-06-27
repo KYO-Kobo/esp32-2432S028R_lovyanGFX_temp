@@ -38,6 +38,9 @@ public:
     BaseScreen* getCurrentScreen() { return currentScreen; }
     ScreenID getCurrentScreenId() const;
     
+    // 特定の画面取得
+    BaseScreen* getScreen(ScreenID id);
+    
     // イベント処理
     void handleEvent(const Event& event);
     

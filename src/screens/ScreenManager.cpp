@@ -79,6 +79,14 @@ ScreenID ScreenManager::getCurrentScreenId() const {
     return SCREEN_HOME;
 }
 
+BaseScreen* ScreenManager::getScreen(ScreenID id) {
+    auto it = screens.find(id);
+    if (it != screens.end()) {
+        return it->second.get();
+    }
+    return nullptr;
+}
+
 void ScreenManager::handleEvent(const Event& event) {
     if (!currentScreen || isTransitioning) {
         return;

@@ -101,10 +101,10 @@ void TouchManager::detectGesture(int32_t x1, int32_t y1, int32_t x2, int32_t y2)
             event.type = EVENT_GESTURE_SWIPE;
             event.data.gesture.type = EVENT_GESTURE_SWIPE;
             event.data.gesture.direction = direction;
-            event.data.gesture.start_x = x1;
-            event.data.gesture.start_y = y1;
-            event.data.gesture.end_x = x2;
-            event.data.gesture.end_y = y2;
+            event.data.gesture.start_x = x1;  // オフセットを削除
+            event.data.gesture.start_y = y1;  // オフセットを削除
+            event.data.gesture.end_x = x2;    // オフセットを削除
+            event.data.gesture.end_y = y2;    // オフセットを削除
             event.data.gesture.duration_ms = millis() - touchStartTime;
             
             g_touchEventQueue->send(event);
@@ -117,8 +117,8 @@ void TouchManager::sendTouchEvent(EventType type, int32_t x, int32_t y, int32_t 
         Event event;
         event.type = type;
         event.data.touch.type = type;
-        event.data.touch.x = x;
-        event.data.touch.y = y;
+        event.data.touch.x = x;  // オフセットを削除
+        event.data.touch.y = y;  // オフセットを削除
         event.data.touch.raw_x = raw_x;
         event.data.touch.raw_y = raw_y;
         event.data.touch.timestamp = millis();

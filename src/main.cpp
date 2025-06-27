@@ -77,10 +77,14 @@ public:
 
         {
             auto cfg = _touch_instance.config();
-            cfg.x_min = 3600;     // 左端のRaw Y値
-            cfg.x_max = 200;      // 右端のRaw Y値  
-            cfg.y_min = 400;      // 下端のRaw X値
-            cfg.y_max = 3800;     // 上端のRaw X値
+            // X座標に-10、Y座標に+10のオフセットを適用
+            // 画面座標系でのオフセットをraw値に変換
+            // X軸: 3600→200 (240ピクセル分), 10ピクセル分 = 142
+            // Y軸: 400→3800 (320ピクセル分), 10ピクセル分 = 106
+            cfg.x_min = 3742;     // 3600 + 142 (左端のRaw Y値 - X軸10ピクセル左へ)
+            cfg.x_max = 0;        // 右端のRaw Y値を0にして、最右端まで反応するように
+            cfg.y_min = 294;      // 400 - 106  (下端のRaw X値 - Y軸10ピクセル下へ)
+            cfg.y_max = 3694;     // 3800 - 106 (上端のRaw X値 - Y軸10ピクセル下へ)
             cfg.pin_int = 36;     // Touch IRQ pin for ESP32-2432S028R
             cfg.bus_shared = false;  // Touch uses separate SPI
             cfg.offset_rotation = 2;  // setRotation(0)に合わせる

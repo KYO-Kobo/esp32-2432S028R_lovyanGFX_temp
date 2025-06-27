@@ -2,6 +2,10 @@
 #define HOME_SCREEN_H
 
 #include "BaseScreen.h"
+#include <memory>
+
+// 前方宣言
+class Label;
 
 class HomeScreen : public BaseScreen {
 private:
@@ -16,6 +20,11 @@ private:
     int32_t touchStartY;
     uint32_t touchStartTime;
     bool isTouching;
+    
+    // リセットメッセージ表示用
+    std::unique_ptr<Label> resetMessageLabel;
+    uint32_t resetMessageStartTime;
+    static constexpr uint32_t RESET_MESSAGE_DURATION = 3000;  // 3秒間表示
     
 public:
     HomeScreen(LGFX* display);
@@ -39,6 +48,10 @@ private:
     
     // スワイプジェスチャーの検出
     void detectSwipeGesture(int32_t endX, int32_t endY);
+    
+public:
+    // リセットメッセージの表示
+    void showResetMessage();
 };
 
 #endif // HOME_SCREEN_H
