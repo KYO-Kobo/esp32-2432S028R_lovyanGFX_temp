@@ -68,8 +68,9 @@ void MenuScreen::createButtons() {
                 if (g_touchEventQueue) { g_touchEventQueue->send(settingsEvent); }
             });
         } else {
-            btn->setOnClick([label = std::string(labels[i].text)](){
-                Serial.printf("%s button pressed\n", label.c_str());
+            std::string labelStr = labels[i].text; // C++11: 事前に値を作成
+            btn->setOnClick([labelStr](){
+                Serial.printf("%s button pressed\n", labelStr.c_str());
             });
         }
         buttons.push_back(std::move(btn));
