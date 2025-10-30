@@ -21,6 +21,33 @@ MenuScreen::MenuScreen(LGFX* display)
 }
 
 void MenuScreen::createButtons() {
+    // 左側に5つの機能ボタンを縦配置（余白エリア）
+    struct BtnDef { const char* label; int x; int y; int w; int h; uint16_t r, g, b; uint16_t pr, pg, pb; };
+    int baseX = 10;
+    int baseY = 60;
+    int bw = 150;
+    int bh = 30;
+    int gap = 6;
+    BtnDef defs[] = {
+        {"待機設定", baseX, baseY + 0*(bh+gap), bw, bh, 96,125,139, 69,90,100},     // Slate Gray
+        {"入力設定", baseX, baseY + 1*(bh+gap), bw, bh, 76,175,80,  56,142,60},      // Green
+        {"出力設定", baseX, baseY + 2*(bh+gap), bw, bh, 255,152,0,  245,124,0},      // Orange
+        {"時間設定", baseX, baseY + 3*(bh+gap), bw, bh, 121,85,72,  93,64,55},       // Brown
+        {"ログ",   baseX, baseY + 4*(bh+gap), bw, bh, 158,158,158, 120,120,120}       // Grey
+    };
+
+    for (auto& d : defs) {
+        auto btn = std::unique_ptr<ModernButton>(new ModernButton(tft, d.x, d.y, d.w, d.h, d.label));
+        ButtonStyle st;
+        st.normalColor  = tft->color565(d.r, d.g, d.b);
+        st.pressedColor = tft->color565(d.pr, d.pg, d.pb);
+        st.cornerRadius = 8;
+        st.shadowOffset = 3;
+        btn->setStyle(st);
+        btn->setOnClick([label = std::string(d.label)](){ Serial.printf("%s button pressed\n", label.c_str()); });
+        buttons.push_back(std::move(btn));
+    }
+
     // ボタン1: デバイス設定（青いボタン、右下）
     auto deviceSettingsBtn = std::unique_ptr<ModernButton>(
         new ModernButton(tft, 170, 170, 130, 40, "デバイス設定")
