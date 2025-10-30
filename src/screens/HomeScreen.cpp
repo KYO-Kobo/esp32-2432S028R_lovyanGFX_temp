@@ -14,7 +14,9 @@ void HomeScreen::init() {
     tft->fillScreen(TFT_BLACK);
     tft->setTextColor(TFT_WHITE);
     tft->setFont(&fonts::lgfxJapanGothic_16);
-    tft->setCursor(10, 20);
+    tft->setCursor(10, 12);
+    tft->println("12:34");
+    tft->setCursor(10, 40);
     tft->println("ホーム画面");
     tft->setFont(nullptr);
 }

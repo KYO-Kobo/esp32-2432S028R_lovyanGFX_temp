@@ -8,9 +8,9 @@
 #define LCD_CS 15
 #define LCD_SCK 14
 #define LCD_MOSI 13
-#define LCD_MISO -1 // Not used
+#define LCD_MISO 12 // Not used
 #define LCD_DC 2
-#define LCD_RST 4
+#define LCD_RST -1
 #define LCD_BL 21 // Changed from 27 to 21
 
 #define TOUCH_CS 33
@@ -28,11 +28,11 @@ public:
     {
         {
             auto cfg = _bus_instance.config();
-            cfg.spi_host = VSPI_HOST;
+            cfg.spi_host = SPI2_HOST;
             cfg.spi_mode = 0;
             cfg.freq_write = 80000000;  // 80MHzに増加してちらつきを軽減
             cfg.freq_read = 16000000;
-            cfg.spi_3wire = true;
+            cfg.spi_3wire = false;
             cfg.use_lock = true;
             cfg.dma_channel = 1;
             cfg.pin_sclk = LCD_SCK;
@@ -88,7 +88,7 @@ public:
             cfg.pin_int = 36;     // Touch IRQ pin for ESP32-2432S028R
             cfg.bus_shared = false;  // Touch uses separate SPI
             cfg.offset_rotation = 5;  // setRotation(0)に合わせる
-            cfg.spi_host = HSPI_HOST;  // Use HSPI for touch
+            cfg.spi_host = -1;  // Use HSPI for touch
             cfg.freq = 1000000;
             cfg.pin_sclk = 25;    // Touch CLK pin
             cfg.pin_mosi = 32;    // Touch DIN pin
