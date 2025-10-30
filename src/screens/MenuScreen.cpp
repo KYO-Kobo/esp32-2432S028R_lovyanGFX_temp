@@ -21,56 +21,59 @@ MenuScreen::MenuScreen(LGFX* display)
 }
 
 void MenuScreen::createButtons() {
-    // 左側に5つの機能ボタンを縦配置（余白エリア）
-    struct BtnDef { const char* label; int x; int y; int w; int h; uint16_t r, g, b; uint16_t pr, pg, pb; };
-    int baseX = 10;
-    int baseY = 60;
-    int bw = 150;
-    int bh = 30;
-    int gap = 6;
-    BtnDef defs[] = {
-        {"待機設定", baseX, baseY + 0*(bh+gap), bw, bh, 96,125,139, 69,90,100},     // Slate Gray
-        {"入力設定", baseX, baseY + 1*(bh+gap), bw, bh, 76,175,80,  56,142,60},      // Green
-        {"出力設定", baseX, baseY + 2*(bh+gap), bw, bh, 255,152,0,  245,124,0},      // Orange
-        {"時間設定", baseX, baseY + 3*(bh+gap), bw, bh, 121,85,72,  93,64,55},       // Brown
-        {"ログ",   baseX, baseY + 4*(bh+gap), bw, bh, 158,158,158, 120,120,120}       // Grey
+    // 2列×3行のグリッドでボタンを配置（サイズはデバイス設定と同等: 130x40）
+    const int bw = 130;
+    const int bh = 40;
+    const int screenW = tft->width();
+    const int screenH = tft->height();
+    const int cols = 2;
+    const int rows = 3;
+    const int gapX = std::max(10, (screenW - (cols * bw)) / (cols + 1));
+    const int totalGridH = rows * bh + (rows - 1) * 12;
+    const int startX = gapX;
+    const int startY = std::max(50, (screenH - totalGridH) / 2);  // タイトルの下、かつ中央寄せ
+
+    struct LabelDef { const char* text; uint16_t r,g,b; uint16_t pr,pg,pb; };
+    std::vector<LabelDef> labels = {
+        {"待機設定", 96,125,139, 69,90,100},     // Slate Gray
+        {"入力設定", 76,175,80,  56,142,60},      // Green
+        {"出力設定", 255,152,0,  245,124,0},      // Orange
+        {"時間設定", 121,85,72,  93,64,55},       // Brown
+        {"ログ",   158,158,158,120,120,120},      // Grey
+        {"デバイス設定", 33,150,243, 25,118,210}  // Blue（6枠目）
     };
 
-    for (auto& d : defs) {
-        auto btn = std::unique_ptr<ModernButton>(new ModernButton(tft, d.x, d.y, d.w, d.h, d.label));
+    for (int i = 0; i < (int)labels.size(); ++i) {
+        int r = i / cols;
+        int c = i % cols;
+        int x = startX + c * (bw + gapX);
+        int y = startY + r * (bh + 12);
+
+        auto btn = std::unique_ptr<ModernButton>(new ModernButton(tft, x, y, bw, bh, labels[i].text));
         ButtonStyle st;
-        st.normalColor  = tft->color565(d.r, d.g, d.b);
-        st.pressedColor = tft->color565(d.pr, d.pg, d.pb);
-        st.cornerRadius = 8;
-        st.shadowOffset = 3;
+        st.normalColor  = tft->color565(labels[i].r, labels[i].g, labels[i].b);
+        st.pressedColor = tft->color565(labels[i].pr, labels[i].pg, labels[i].pb);
+        st.cornerRadius = 10;
+        st.shadowOffset = 4;
         btn->setStyle(st);
-        btn->setOnClick([label = std::string(d.label)](){ Serial.printf("%s button pressed\n", label.c_str()); });
+
+        // 「デバイス設定」は設定画面に遷移、他はログ出力のみの最小実装
+        if (std::string(labels[i].text) == "デバイス設定") {
+            btn->setOnClick([this]() {
+                Serial.println("Device Settings button pressed");
+                Event settingsEvent;
+                settingsEvent.type = EVENT_SCREEN_CHANGE;
+                settingsEvent.data.screenChange.targetScreen = SCREEN_SETTINGS;
+                settingsEvent.data.screenChange.transition = TRANSITION_SLIDE_LEFT;
+                if (g_touchEventQueue) { g_touchEventQueue->send(settingsEvent); }
+            });
+        } else {
+            btn->setOnClick([label = std::string(labels[i].text)](){
+                Serial.printf("%s button pressed\n", label.c_str());
+            });
+        }
         buttons.push_back(std::move(btn));
     }
-
-    // ボタン1: デバイス設定（青いボタン、右下）
-    auto deviceSettingsBtn = std::unique_ptr<ModernButton>(
-        new ModernButton(tft, 170, 170, 130, 40, "デバイス設定")
-    );
-    ButtonStyle blueStyle;
-    blueStyle.normalColor = tft->color565(33, 150, 243);    // Material Blue
-    blueStyle.pressedColor = tft->color565(25, 118, 210);   // Darker Blue
-    blueStyle.cornerRadius = 10;
-    blueStyle.shadowOffset = 4;
-    deviceSettingsBtn->setStyle(blueStyle);
-    deviceSettingsBtn->setOnClick([this]() {
-        Serial.println("Device Settings button pressed");
-        // 設定画面に遷移
-        Event settingsEvent;
-        settingsEvent.type = EVENT_SCREEN_CHANGE;
-        settingsEvent.data.screenChange.targetScreen = SCREEN_SETTINGS;
-        settingsEvent.data.screenChange.transition = TRANSITION_SLIDE_LEFT;
-        
-        if (g_touchEventQueue) {
-            g_touchEventQueue->send(settingsEvent);
-        }
-    });
-    buttons.push_back(std::move(deviceSettingsBtn));
     
     // ボタン5: 閉じる（右上、リセットボタンと同じスタイル）
     auto closeBtn = std::unique_ptr<ModernButton>(
