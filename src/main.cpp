@@ -81,10 +81,10 @@ public:
             // 画面座標系でのオフセットをraw値に変換
             // X軸: 3600→200 (240ピクセル分), 10ピクセル分 = 142
             // Y軸: 400→3800 (320ピクセル分), 10ピクセル分 = 106
-            cfg.x_min = 3742;     // 3600 + 142 (左端のRaw Y値 - X軸10ピクセル左へ)
-            cfg.x_max = 0;        // 右端のRaw Y値を0にして、最右端まで反応するように
-            cfg.y_min = 294;      // 400 - 106  (下端のRaw X値 - Y軸10ピクセル下へ)
-            cfg.y_max = 3694;     // 3800 - 106 (上端のRaw X値 - Y軸10ピクセル下へ)
+            cfg.x_min = 3650;     // タッチスクリーンから得られる最小のX値(生の値)
+            cfg.x_max = 480;      // タッチスクリーンから得られる最大のX値(生の値)
+            cfg.y_min = 280 - 180;      // タッチスクリーンから得られる最小のY値(生の値)
+            cfg.y_max = 3788;     // タッチスクリーンから得られる最大のY値(生の値)
             cfg.pin_int = 36;     // Touch IRQ pin for ESP32-2432S028R
             cfg.bus_shared = false;  // Touch uses separate SPI
             cfg.offset_rotation = 5;  // setRotation(0)に合わせる
