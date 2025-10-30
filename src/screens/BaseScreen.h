@@ -17,6 +17,11 @@ enum ScreenID {
     SCREEN_MENU,
     SCREEN_SETTINGS,
     SCREEN_INFO,
+    SCREEN_STANDBY_SETTINGS,   // 待機設定
+    SCREEN_INPUT_SETTINGS,     // 入力設定
+    SCREEN_OUTPUT_SETTINGS,    // 出力設定
+    SCREEN_TIME_SETTINGS,      // 時間設定
+    SCREEN_LOG,                // ログ
     SCREEN_COUNT
 };
 

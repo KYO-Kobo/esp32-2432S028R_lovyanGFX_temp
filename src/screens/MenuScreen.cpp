@@ -58,8 +58,9 @@ void MenuScreen::createButtons() {
         st.shadowOffset = 4;
         btn->setStyle(st);
 
-        // 「デバイス設定」は設定画面に遷移、他はログ出力のみの最小実装
-        if (std::string(labels[i].text) == "デバイス設定") {
+        // 各ボタンの遷移先を割り当て
+        std::string text = labels[i].text;
+        if (text == "デバイス設定") {
             btn->setOnClick([this]() {
                 Serial.println("Device Settings button pressed");
                 Event settingsEvent;
@@ -68,11 +69,44 @@ void MenuScreen::createButtons() {
                 settingsEvent.data.screenChange.transition = TRANSITION_SLIDE_LEFT;
                 if (g_touchEventQueue) { g_touchEventQueue->send(settingsEvent); }
             });
-        } else {
-            std::string labelStr = labels[i].text; // C++11: 事前に値を作成
-            btn->setOnClick([labelStr](){
-                Serial.printf("%s button pressed\n", labelStr.c_str());
+        } else if (text == "待機設定") {
+            btn->setOnClick([this](){
+                Event e; e.type = EVENT_SCREEN_CHANGE;
+                e.data.screenChange.targetScreen = SCREEN_STANDBY_SETTINGS;
+                e.data.screenChange.transition = TRANSITION_SLIDE_LEFT;
+                if (g_touchEventQueue) g_touchEventQueue->send(e);
             });
+        } else if (text == "入力設定") {
+            btn->setOnClick([this](){
+                Event e; e.type = EVENT_SCREEN_CHANGE;
+                e.data.screenChange.targetScreen = SCREEN_INPUT_SETTINGS;
+                e.data.screenChange.transition = TRANSITION_SLIDE_LEFT;
+                if (g_touchEventQueue) g_touchEventQueue->send(e);
+            });
+        } else if (text == "出力設定") {
+            btn->setOnClick([this](){
+                Event e; e.type = EVENT_SCREEN_CHANGE;
+                e.data.screenChange.targetScreen = SCREEN_OUTPUT_SETTINGS;
+                e.data.screenChange.transition = TRANSITION_SLIDE_LEFT;
+                if (g_touchEventQueue) g_touchEventQueue->send(e);
+            });
+        } else if (text == "時間設定") {
+            btn->setOnClick([this](){
+                Event e; e.type = EVENT_SCREEN_CHANGE;
+                e.data.screenChange.targetScreen = SCREEN_TIME_SETTINGS;
+                e.data.screenChange.transition = TRANSITION_SLIDE_LEFT;
+                if (g_touchEventQueue) g_touchEventQueue->send(e);
+            });
+        } else if (text == "ログ") {
+            btn->setOnClick([this](){
+                Event e; e.type = EVENT_SCREEN_CHANGE;
+                e.data.screenChange.targetScreen = SCREEN_LOG;
+                e.data.screenChange.transition = TRANSITION_SLIDE_LEFT;
+                if (g_touchEventQueue) g_touchEventQueue->send(e);
+            });
+        } else {
+            std::string labelStr = labels[i].text;
+            btn->setOnClick([labelStr](){ Serial.printf("%s button pressed\n", labelStr.c_str()); });
         }
         buttons.push_back(std::move(btn));
     }
