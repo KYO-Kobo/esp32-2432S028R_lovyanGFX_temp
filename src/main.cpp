@@ -48,13 +48,13 @@ public:
             cfg.pin_cs = LCD_CS;
             cfg.pin_rst = LCD_RST;
             cfg.pin_busy = -1;
-            cfg.memory_width = 240;
-            cfg.memory_height = 320;
-            cfg.panel_width = 240;
-            cfg.panel_height = 320;
+            cfg.memory_width = 320;
+            cfg.memory_height = 240;
+            cfg.panel_width = 320;
+            cfg.panel_height = 240;
             cfg.offset_x = 0;
             cfg.offset_y = 0;
-            cfg.offset_rotation = 0;
+            cfg.offset_rotation = 5;
             cfg.dummy_read_pixel = 8;
             cfg.dummy_read_bits = 1;
             cfg.readable = true;
@@ -87,7 +87,7 @@ public:
             cfg.y_max = 3694;     // 3800 - 106 (上端のRaw X値 - Y軸10ピクセル下へ)
             cfg.pin_int = 36;     // Touch IRQ pin for ESP32-2432S028R
             cfg.bus_shared = false;  // Touch uses separate SPI
-            cfg.offset_rotation = 2;  // setRotation(0)に合わせる
+            cfg.offset_rotation = 5;  // setRotation(0)に合わせる
             cfg.spi_host = HSPI_HOST;  // Use HSPI for touch
             cfg.freq = 1000000;
             cfg.pin_sclk = 25;    // Touch CLK pin
