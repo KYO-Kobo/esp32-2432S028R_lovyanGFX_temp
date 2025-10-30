@@ -29,9 +29,10 @@ void MenuScreen::createButtons() {
     const int cols = 2;
     const int rows = 3;
     const int gapX = std::max(10, (screenW - (cols * bw)) / (cols + 1));
-    const int totalGridH = rows * bh + (rows - 1) * 12;
+    const int rowGap = 8;  // 縦方向のギャップを少し狭める
+    const int totalGridH = rows * bh + (rows - 1) * rowGap;
     const int startX = gapX;
-    const int startY = std::max(50, (screenH - totalGridH) / 2);  // タイトルの下、かつ中央寄せ
+    const int startY = std::max(60, (screenH - totalGridH) / 2);  // 下線と干渉しないよう少し下げる
 
     struct LabelDef { const char* text; uint16_t r,g,b; uint16_t pr,pg,pb; };
     std::vector<LabelDef> labels = {
@@ -47,7 +48,7 @@ void MenuScreen::createButtons() {
         int r = i / cols;
         int c = i % cols;
         int x = startX + c * (bw + gapX);
-        int y = startY + r * (bh + 12);
+        int y = startY + r * (bh + rowGap);
 
         auto btn = std::unique_ptr<ModernButton>(new ModernButton(tft, x, y, bw, bh, labels[i].text));
         ButtonStyle st;
